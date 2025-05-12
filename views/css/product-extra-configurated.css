@@ -1,0 +1,26 @@
+/**
+ * 2023 DMConcept
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement
+ *
+ * @author    DMConcept <support@dmconcept.fr>
+ * @copyright 2023 DMConcept
+ * @license   Commercial license (You can not resell or redistribute this software.)
+ *
+ */
+
+#toolbar-nav, 
+.bootstrap .product-tab-content,
+.bootstrap .list-group-item{
+    display: none !important;
+}
+#product-tab-content-ModuleConfigurator{
+    display: block !important;
+}
+#link-ModuleConfigurator{
+    display: block !important;
+}

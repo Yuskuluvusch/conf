@@ -1,0 +1,8 @@
+{
+    "config": {
+        "prepend-autoloader": false
+    },
+    "require": {
+        "phpfastcache/phpfastcache": "^7.1"
+    }
+}

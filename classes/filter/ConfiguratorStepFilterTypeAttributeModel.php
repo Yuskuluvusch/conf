@@ -1,0 +1,320 @@
+<?php
+/**
+ * 2023 DMConcept
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement
+ *
+ * @author    DMConcept <support@dmconcept.fr>
+ * @copyright 2023 DMConcept
+ * @license   Commercial license (You can not resell or redistribute this software.)
+ */
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+if (!defined('_CAN_LOAD_FILES_')) {
+    exit;
+}
+
+if (!class_exists('ConfiguratorStepFilterTypeAttributeModel')) {
+    require_once dirname(__FILE__) . '/ConfiguratorStepFilterAbstract.php';
+    require_once dirname(__FILE__) . '/../ConfiguratorBridgeAttribute.php';
+
+    /**
+     * Class ConfiguratorStepFilterTypeAttributeModel
+     */
+    class ConfiguratorStepFilterTypeAttributeModel extends ConfiguratorStepFilterAbstract
+    {
+        public function __construct($id = null, $id_lang = null, $id_shop = null)
+        {
+            parent::__construct($id, $id_lang, $id_shop);
+        }
+
+        public function getOption($lang_id)
+        {
+            return new AttributeGroup($this->id_option);
+        }
+
+        public function isValid($id_configurator_step_option, $cart_detail)
+        {
+            switch ($this->operator) {
+                case self::TYPE_OPERATOR_EQUAL:
+                case self::TYPE_OPERATOR_CONTAINS:
+                case self::TYPE_OPERATOR_CONTAINED:
+                case self::TYPE_OPERATOR_UPPER:
+                case self::TYPE_OPERATOR_UPPER_OR_EQUAL:
+                case self::TYPE_OPERATOR_LOWER:
+                case self::TYPE_OPERATOR_LOWER_OR_EQUAL:
+                case self::TYPE_OPERATOR_EQUAL_NUMBER:
+                case self::TYPE_OPERATOR_UPPER_NUMBER:
+                case self::TYPE_OPERATOR_UPPER_OR_EQUAL_NUMBER:
+                case self::TYPE_OPERATOR_LOWER_NUMBER:
+                case self::TYPE_OPERATOR_LOWER_OR_EQUAL_NUMBER:
+                    $option_selected = $this->findCartDetailOptionSelected($cart_detail);
+
+                    return $this->isValidAttributes($id_configurator_step_option, $option_selected);
+                case self::TYPE_OPERATOR_CONTAINS_AT_LEAST:
+                    $options_selected = $this->findCartDetailOptionsSelected($cart_detail);
+
+                    return $this->isValidAttributesMultiple($id_configurator_step_option, $options_selected);
+                case self::TYPE_OPERATOR_EQUAL_FORMULA:
+                case self::TYPE_OPERATOR_UPPER_FORMULA:
+                case self::TYPE_OPERATOR_UPPER_OR_EQUAL_FORMULA:
+                case self::TYPE_OPERATOR_LOWER_FORMULA:
+                case self::TYPE_OPERATOR_LOWER_OR_EQUAL_FORMULA:
+                    $option_selected = $this->findCartDetailOptionSelected($cart_detail);
+
+                    return $this->isValidFormula($id_configurator_step_option, $option_selected, $cart_detail);
+            }
+
+            return false;
+        }
+
+        private function isValidAttributes($id_configurator_step_option, $option_selected)
+        {
+            if (!$option_selected) {
+                return false;
+            }
+
+            $attributes = $this->getAttributesByIdStepOption($id_configurator_step_option);
+            $attributes_target = $this->getAttributesByIdStepOption($option_selected->id);
+
+            $step_selected = ConfiguratorStepFactory::newObject($option_selected->id_configurator_step);
+            if ($step_selected->type !== ConfiguratorStepAbstract::TYPE_STEP_PRODUCTS) {
+                $this->id_target_option = $step_selected->id_option_group;
+            }
+
+            foreach ($attributes_target as $attribute_target) {
+                if ((int) $attribute_target['id_group'] === (int) $this->id_target_option) {
+                    foreach ($attributes as $attribute) {
+                        if ((int) $attribute['id_group'] === (int) $this->id_option) {
+                            if ($this->type_value === self::TYPE_VALUE_ID) {
+                                $val_1 = $attribute['id_option'];
+                                $val_2 = $attribute_target['id_option'];
+                            } elseif ($this->type_value === self::TYPE_VALUE_NAME) {
+                                $val_1 = $attribute['name'];
+                                $val_2 = $attribute_target['name'];
+                            }
+
+                            switch ($this->operator) {
+                                case self::TYPE_OPERATOR_EQUAL:
+                                    return (bool) ($val_1 === $val_2);
+                                case self::TYPE_OPERATOR_CONTAINS:
+                                    $pos = strpos(Tools::strtolower($val_1), Tools::strtolower($val_2));
+                                case self::TYPE_OPERATOR_CONTAINS_AT_LEAST:
+                                    $pos = strpos(Tools::strtolower($val_1), Tools::strtolower($val_2));
+
+                                    return (bool) ($pos !== false);
+                                case self::TYPE_OPERATOR_CONTAINED:
+                                    $pos = strpos(Tools::strtolower($val_2), Tools::strtolower($val_1));
+
+                                    return (bool) ($pos !== false);
+                                case self::TYPE_OPERATOR_UPPER:
+                                    return (bool) ($val_1 > $val_2);
+                                case self::TYPE_OPERATOR_UPPER_OR_EQUAL:
+                                    return (bool) ($val_1 >= $val_2);
+                                case self::TYPE_OPERATOR_LOWER:
+                                    return (bool) ($val_1 < $val_2);
+                                case self::TYPE_OPERATOR_LOWER_OR_EQUAL:
+                                    return (bool) ($val_1 <= $val_2);
+                                case self::TYPE_OPERATOR_EQUAL_NUMBER:
+                                    return (bool) ((float) $val_1 === (float) $val_2);
+                                case self::TYPE_OPERATOR_UPPER_NUMBER:
+                                    return (bool) ((float) $val_1 > (float) $val_2);
+                                case self::TYPE_OPERATOR_UPPER_OR_EQUAL_NUMBER:
+                                    return (bool) ((float) $val_1 >= (float) $val_2);
+                                case self::TYPE_OPERATOR_LOWER_NUMBER:
+                                    return (bool) ((float) $val_1 < (float) $val_2);
+                                case self::TYPE_OPERATOR_LOWER_OR_EQUAL_NUMBER:
+                                    return (bool) ((float) $val_1 <= (float) $val_2);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private function isValidAttributesMultiple($id_configurator_step_option, $options_selected)
+        {
+            if (empty($options_selected)) {
+                return false;
+            }
+
+            $attributes = $this->getAttributesByIdStepOption($id_configurator_step_option);
+            $attributes_targets = [];
+            foreach ($options_selected as $option_selected) {
+                $attributes_targets[] = $this->getAttributeByIdStepOption($option_selected->id);
+            }
+
+            $step_selected = ConfiguratorStepFactory::newObject($option_selected->id_configurator_step);
+            if ($step_selected->type !== ConfiguratorStepAbstract::TYPE_STEP_PRODUCTS) {
+                $this->id_target_option = $step_selected->id_option_group;
+            }
+
+            foreach ($attributes_targets as $attributes_target) {
+                foreach ($attributes_target as $attribute_target) {
+                    if ((int) $attribute_target['id_group'] === (int) $this->id_target_option) {
+                        foreach ($attributes as $attribute) {
+                            if ((int) $attribute['id_group'] === (int) $this->id_option) {
+                                if ($this->type_value === self::TYPE_VALUE_ID) {
+                                    $val_1 = $attribute['id_option'];
+                                    $val_2 = $attribute_target['id_option'];
+                                } elseif ($this->type_value === self::TYPE_VALUE_NAME) {
+                                    $val_1 = $attribute['name'];
+                                    $val_2 = $attribute_target['name'];
+                                }
+
+                                switch ($this->operator) {
+                                    case self::TYPE_OPERATOR_CONTAINS_AT_LEAST:
+                                        $pos = strpos(Tools::strtolower($val_1), Tools::strtolower($val_2));
+                                        if ($pos !== false) {
+                                            return true;
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private function isValidFormula($id_configurator_step_option, $option_selected, $cart_detail)
+        {
+            if (!$option_selected) {
+                return false;
+            }
+
+            if (Module::isInstalled('dm_advancedformula') && Module::isEnabled('dm_advancedformula')) {
+                require_once dirname(__FILE__) . '/../../../dm_advancedformula/classes/helper/AdvancedformulaHelper.php';
+                $step = ConfiguratorStepFactory::newObject($option_selected->id_configurator_step);
+                // This is a link with the module "dm_advancedformula"
+                // We check before this module is installed
+                if (isset(self::$formula_result_cache[$this->formula])) {
+                    $value_formula = self::$formula_result_cache[$this->formula];
+                } else {
+                    (float) $value_formula = AdvancedformulaHelper::loadFormula(
+                        $cart_detail,
+                        $step,
+                        $cart_detail->getDetail(),
+                        $this->formula,
+                        'float',
+                        'Filter Attribute ' . $this->operator
+                    );
+                    self::$formula_result_cache[$this->formula] = $value_formula;
+                }
+
+                $attributes = $this->getAttributesByIdStepOption($id_configurator_step_option);
+
+                foreach ($attributes as $attribute) {
+                    if ((int) $attribute['id_group'] === (int) $this->id_option) {
+                        $value = (float) $attribute['name'];
+                        switch ($this->operator) {
+                            case self::TYPE_OPERATOR_EQUAL_FORMULA:
+                                return (bool) ($value = $value_formula);
+                            case self::TYPE_OPERATOR_UPPER_FORMULA:
+                                return (bool) ($value > $value_formula);
+                            case self::TYPE_OPERATOR_UPPER_OR_EQUAL_FORMULA:
+                                return (bool) ($value >= $value_formula);
+                            case self::TYPE_OPERATOR_LOWER_FORMULA:
+                                return (bool) ($value < $value_formula);
+                            case self::TYPE_OPERATOR_LOWER_OR_EQUAL_FORMULA:
+                                return (bool) ($value <= $value_formula);
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private function getAttributesByIdStepOption($id_step_option)
+        {
+            $id_lang = (int) Context::getContext()->language->id;
+            $option = ConfiguratorStepOptionFactory::newObject($id_step_option);
+            $step = ConfiguratorStepFactory::newObject($option->id_configurator_step);
+            switch ($step->type) {
+                case ConfiguratorStepAbstract::TYPE_STEP_PRODUCTS:
+                    $attributes_product = Product::getAttributesParams($option->id_option, $option->ipa);
+                    $attributes_target = [];
+                    foreach ($attributes_product as $attribute_product) {
+                        $attribute_target = new ConfiguratorBridgeAttribute($attribute_product['id_attribute'], $id_lang);
+                        $attributes_target[] = [
+                            'id_group' => (int) $attribute_target->id_attribute_group,
+                            'id_option' => (int) $attribute_target->id,
+                            'name' => $attribute_target->name,
+                        ];
+                    }
+
+                    return $attributes_target;
+                case ConfiguratorStepAbstract::TYPE_STEP_FEATURES:
+                    $feature_target = new FeatureValue($option->id_option, $id_lang);
+                    $features_target = [];
+                    $features_target[] = [
+                        'id_group' => (int) $feature_target->id_feature,
+                        'id_option' => (int) $feature_target->id,
+                        'name' => $feature_target->value,
+                    ];
+
+                    return $features_target;
+                case ConfiguratorStepAbstract::TYPE_STEP_ATTRIBUTES:
+                    $attribute_target = new ConfiguratorBridgeAttribute($option->id_option, $id_lang);
+                    $attributes_target = [];
+                    $attributes_target[] = [
+                        'id_group' => (int) $attribute_target->id_attribute_group,
+                        'id_option' => (int) $attribute_target->id,
+                        'name' => $attribute_target->name,
+                    ];
+
+                    return $attributes_target;
+                default:
+                    return [];
+            }
+        }
+
+        private function findCartDetailOptionSelected($cart_detail)
+        {
+            // @todo: cache
+            $step_detail = $this->findCartDetailStep($cart_detail);
+            if ($step_detail) {
+                foreach ($step_detail['options'] as $option_detail) {
+                    if ($option_detail['selected']) {
+                        return ConfiguratorStepOptionFactory::newObject($option_detail['id']);
+                    }
+                }
+            }
+        }
+
+        private function findCartDetailOptionsSelected($cart_detail)
+        {
+            $return = [];
+            $step_detail = $this->findCartDetailStep($cart_detail);
+            if ($step_detail) {
+                foreach ($step_detail['options'] as $option_detail) {
+                    if ($option_detail['selected']) {
+                        $return[] = ConfiguratorStepOptionFactory::newObject($option_detail['id']);
+                    }
+                }
+            }
+
+            return $return;
+        }
+
+        private function findCartDetailStep($cart_detail)
+        {
+            $detail = $cart_detail->getDetail();
+            foreach ($detail as $step_detail) {
+                if ((int) $step_detail['id'] === (int) $this->id_target_step) {
+                    return $step_detail;
+                }
+            }
+        }
+    }
+}

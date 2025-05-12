@@ -1,0 +1,139 @@
+/**
+ * 2023 DMConcept
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement
+ *
+ * @author    DMConcept <support@dmconcept.fr>
+ * @copyright 2023 DMConcept
+ * @license   Commercial license (You can not resell or redistribute this software.)
+ *
+ */
+
+.bootstrap a.list-group-item{
+	width: 100%;
+}
+
+.chosen-container{
+	min-width: 50% !important;
+}
+
+@media(max-width: 1200px){
+	.chosen-container{
+		min-width: 100% !important;
+	}
+}
+
+.default-selected i{
+	cursor: pointer;
+}
+
+.div_min_max{
+    margin-top:10px;
+}
+
+.sub-form-group{
+    border: 1px solid #e6e6e6;
+    border-radius: 5px;
+    margin-bottom: 15px;
+	padding: 15px;
+	-moz-box-shadow: inset 0px 0px 10px -8px #656565;
+	-webkit-box-shadow: inset 0px 0px 10px -8px #656565;
+	-o-box-shadow: inset 0px 0px 10px -8px #656565;
+	box-shadow: inset 0px 0px 10px -8px #656565;
+	filter:progid:DXImageTransform.Microsoft.Shadow(color=#656565, Direction=NaN, Strength=10);
+}
+
+.panel h4{
+	border-bottom: #eee solid 1px;
+	padding-bottom: 5px;
+}
+
+.price_impact .chosen-container { width:100% !important; }
+
+/* FORMULA FORM */
+.argument-item{
+	margin-bottom: 15px;
+}
+/* /FORMULA FORM */
+
+/* FORMULA PLUGIN */
+#formula_ifr {
+	height: 35px !important;
+}
+
+/* /FORMULA PLUGIN */
+
+/* TINYMCE */
+.mce-i-erase::before {
+	content: "";
+}
+
+.mce-i-check::before {
+	content: "";
+}
+
+.mce-i-error::before {
+	content: "";
+}
+
+.mce-i-loader::before {
+	content: "";
+}
+.mce-i-loader {
+	-webkit-animation:fa-spin 2s infinite linear;
+	animation:fa-spin 2s infinite linear;
+}
+
+.mce-i-function::before {
+	content: "";
+}
+/* /TINYMCE */
+
+/* SELECT2 */
+.configurator-select2 { width:100%; }
+/* /SELECT2 */
+
+/* LOADING */
+.loading {
+    background-color: rgba(1,1,1,0.05);
+    height: 100%;
+    border-radius: 10px;
+}
+.loading:before{
+	content: "";
+	display: block;
+	background-color: rgb(255, 255, 255);
+	background-color: rgba(255, 255, 255, 0.5);
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 9000;
+	background-image: url("../img/loader.gif");
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: 40px;
+}
+/* /LOADING */
+
+.bootstrap .table.list_options > tbody > tr.active > td { background-color:#D7EEF8 !important; }
+.bootstrap .dropdown-menu > li a.link-disabled { color:#777; }
+.bootstrap .dropdown-menu > li a.link-disabled:hover { background-color:#fff; cursor:default; }
+
+#configurator-tab-list tbody > tr:first-child .configurator-tab-list-btn-edit-position-up { display: none; }
+#configurator-tab-list tbody > tr:last-child .configurator-tab-list-btn-edit-position-down { display: none; }
+
+.label-layer { margin: 8px; }
+
+.page-head .btn-toolbar .icon-calculator { width: 30px; height: 30px; font-size: 28px; }
+
+	/* FIX: conflit avec un autre module */
+#configurator_step_form select.chosen { display: block !important; }
+
+/* FIX */
+#table-configurator_step tr { float: none !important; }
